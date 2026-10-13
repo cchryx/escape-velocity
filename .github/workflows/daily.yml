@@ -1,0 +1,25 @@
+name: Daily job refresh
+
+on:
+  schedule:
+    - cron: "23 10 * * *" # every day, 6:23 am Toronto time (EDT)
+  workflow_dispatch:
+
+jobs:
+  load:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: loaders/requirements.txt
+
+      - run: pip install -r loaders/requirements.txt
+
+      - name: Load Summer 2027 postings
+        run: python loaders/load_postings.py
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
