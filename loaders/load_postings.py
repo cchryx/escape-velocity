@@ -1,6 +1,6 @@
-"""Loader 1: pull Summer 2027 internships from the SimplifyJobs list into Supabase.
+"""Loader 1: pull internships from the SimplifyJobs list into Supabase.
 
-- Keeps listings that are visible and include the "Summer 2027" term.
+- Keeps every visible listing, for any term (summer, fall, winter, spring).
 - Inserts new postings and updates changed ones by id.
 - Marks postings as closed (active = false) when they are closed or gone from the list.
 - Never touches description, skills or embedding. Later loaders fill those.
@@ -21,7 +21,6 @@ LISTINGS_URL = (
     "https://raw.githubusercontent.com/SimplifyJobs/Summer2027-Internships/"
     "dev/.github/scripts/listings.json"
 )
-TERM = "Summer 2027"
 
 UPSERT_SQL = """
 insert into postings (id, company, title, url, locations, terms, category, active, date_posted, updated_at)
@@ -68,7 +67,6 @@ def to_row(item):
 def keep(item):
     return (
         item.get("is_visible", True)
-        and TERM in (item.get("terms") or [])
         and item.get("id")
         and item.get("company_name")
         and item.get("title")
@@ -85,7 +83,7 @@ def main():
     items = fetch_listings()
     rows = [to_row(x) for x in items if keep(x)]
     open_ids = [r["id"] for r in rows if r["active"]]
-    print(f"Fetched {len(items)} listings. Kept {len(rows)} for {TERM}, {len(open_ids)} open.")
+    print(f"Fetched {len(items)} listings. Kept {len(rows)}, {len(open_ids)} open.")
 
     with psycopg.connect(db_url) as conn, conn.cursor() as cur:
         cur.execute("select id from postings")

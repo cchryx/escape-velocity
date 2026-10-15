@@ -19,7 +19,7 @@ jobs:
 
       - run: pip install -r loaders/requirements.txt
 
-      - name: Load Summer 2027 postings
+      - name: Load internship postings
         run: python loaders/load_postings.py
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

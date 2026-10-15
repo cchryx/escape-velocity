@@ -2,7 +2,7 @@
 
 Find the internships that fit you. Get the courses that launch you there.
 
-Upload your resume. Escape Velocity ranks open Summer 2027 internships by fit and lists the skills you are missing for each one. Then it suggests courses that teach those skills.
+Upload your resume. Escape Velocity ranks open internships by fit and lists the skills you are missing for each one. Then it suggests courses that teach those skills.
 
 ## Status
 
@@ -13,7 +13,7 @@ Upload your resume. Escape Velocity ranks open Summer 2027 internships by fit an
 
 ## How it works
 
-1. A daily job pulls Summer 2027 internships from the [SimplifyJobs list](https://github.com/SimplifyJobs/Summer2027-Internships) into Supabase.
+1. A daily job pulls open internships for every term from the [SimplifyJobs list](https://github.com/SimplifyJobs/Summer2027-Internships) into Supabase.
 2. Postings get skill tags and a vector for each description.
 3. When you upload a resume, the API turns it into a vector and finds the closest postings.
 4. Each match is scored: `fit = 0.6 × meaning match + 0.4 × skill overlap`.
@@ -41,4 +41,4 @@ python loaders/load_postings.py
 
 ## Credits
 
-Job data comes from the [SimplifyJobs Summer 2027 list](https://github.com/SimplifyJobs/Summer2027-Internships). Every result links back to the original posting.
+Job data comes from the [SimplifyJobs internship list](https://github.com/SimplifyJobs/Summer2027-Internships). Every result links back to the original posting.
