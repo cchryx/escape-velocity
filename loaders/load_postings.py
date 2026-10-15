@@ -23,22 +23,23 @@ LISTINGS_URL = (
 )
 
 UPSERT_SQL = """
-insert into postings (id, company, title, url, locations, terms, category, active, date_posted, updated_at)
-values (%(id)s, %(company)s, %(title)s, %(url)s, %(locations)s, %(terms)s, %(category)s, %(active)s, %(date_posted)s, now())
+insert into postings (id, company, title, url, locations, country, terms, category, active, date_posted, updated_at)
+values (%(id)s, %(company)s, %(title)s, %(url)s, %(locations)s, %(country)s, %(terms)s, %(category)s, %(active)s, %(date_posted)s, now())
 on conflict (id) do update set
   company     = excluded.company,
   title       = excluded.title,
   url         = excluded.url,
   locations   = excluded.locations,
+  country     = excluded.country,
   terms       = excluded.terms,
   category    = excluded.category,
   active      = excluded.active,
   date_posted = excluded.date_posted,
   updated_at  = now()
-where (postings.company, postings.title, postings.url, postings.locations,
+where (postings.company, postings.title, postings.url, postings.locations, postings.country,
        postings.terms, postings.category, postings.active, postings.date_posted)
    is distinct from
-      (excluded.company, excluded.title, excluded.url, excluded.locations,
+      (excluded.company, excluded.title, excluded.url, excluded.locations, excluded.country,
        excluded.terms, excluded.category, excluded.active, excluded.date_posted)
 """
 
@@ -49,6 +50,36 @@ def fetch_listings():
     return res.json()
 
 
+CA_WORDS = ("Canada", "Toronto", "Vancouver", "Montreal", "Montréal", "Waterloo",
+            "Ottawa", "Calgary", "Edmonton", "Kitchener", "Mississauga", "Markham")
+CA_PROVINCES = {"ON", "BC", "QC", "AB", "MB", "NS", "SK", "NB", "NL", "PE"}
+US_STATES = {
+    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "DC", "FL", "GA", "HI", "ID", "IL",
+    "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE",
+    "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD",
+    "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
+}
+US_NAMES = {
+    "USA", "United States", "Remote in USA", "Remote in US", "NYC", "SF", "LA",
+    "South SF", "Alabama", "Arizona", "California", "Colorado", "Florida", "Georgia",
+    "Illinois", "Iowa", "Massachusetts", "Michigan", "Minnesota", "New Jersey",
+    "New York", "North Carolina", "Ohio", "Oregon", "Pennsylvania", "Texas",
+    "Utah", "Virginia", "Washington",
+}
+
+
+def countries(locations):
+    found = set()
+    for loc in locations:
+        loc = loc.strip()
+        last = loc.rsplit(", ", 1)[-1]  # "Austin, TX" -> "TX"
+        if last in CA_PROVINCES or any(w in loc for w in CA_WORDS):
+            found.add("CA")
+        elif last in US_STATES or loc in US_NAMES or last in US_NAMES:
+            found.add("US")
+    return sorted(found) or ["other"]
+
+
 def to_row(item):
     posted = item.get("date_posted")
     return {
@@ -57,6 +88,7 @@ def to_row(item):
         "title": (item.get("title") or "").strip(),
         "url": item.get("url") or "",
         "locations": item.get("locations") or [],
+        "country": countries(item.get("locations") or []),
         "terms": item.get("terms") or [],
         "category": item.get("category"),
         "active": bool(item.get("active")),
